@@ -1,0 +1,74 @@
+name: Build and Push Docker Image to Google Artifacts Registry and Deploy to Dev Environment
+
+on:
+  push:
+    branches: dev
+  workflow_dispatch:
+
+jobs:
+  build-and-push-to-google-artifacts-registry:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Test Report
+        uses: dorny/test-reporter@v2
+        if: success() || failure()
+        with:
+          name: Vitest Tests
+          path: junit.xml
+          reporter: java-junit
+
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Configure Docker to use gcloud credentials
+        run: |
+          gcloud auth configure-docker africa-south1-docker.pkg.dev --quiet
+
+      - name: Build, tag, and push image to Google Artifacts repository
+        run: |
+
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
+
+          docker build -f Dockerfile \
+            --build-arg NODE_ENV=dev \
+            --build-arg LOG_LEVEL=debug \
+            --build-arg FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
+            -t africa-south1-docker.pkg.dev/${{ secrets.FIREBASE_PROJECT_ID }}/from-the-hart-tech/from-the-hart-identity:$TIMESTAMP .
+
+          docker push africa-south1-docker.pkg.dev/${{ secrets.FIREBASE_PROJECT_ID }}/from-the-hart-tech/from-the-hart-identity:$TIMESTAMP
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.11.2"
+
+      - name: Deploy Dev Environment
+        run: |
+          cd terraform/dev
+          terraform init
+          terraform apply -auto-approve \
+            -var="identity_image_uri=africa-south1-docker.pkg.dev/${{ secrets.FIREBASE_PROJECT_ID }}/from-the-hart-tech/from-the-hart-identity:$TIMESTAMP"
