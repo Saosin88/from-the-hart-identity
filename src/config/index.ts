@@ -14,17 +14,15 @@ const firestore = {
 const authServiceAccount = process.env.AUTH_SERVICE_ACCOUNT_EMAIL;
 
 // Fail-fast validation: these env vars are required for the service to function
-// In test mode, skip the authServiceAccount check (tests set it) and projectId check (setup sets it)
-if (env !== "test") {
-  const required: Record<string, string | undefined> = {
-    FIREBASE_PROJECT_ID: firestore.projectId,
-    AUTH_SERVICE_ACCOUNT_EMAIL: authServiceAccount,
-  };
+// In test/mock mode, validation is relaxed — tests and local dev can skip GCP setup.
+if (env !== "test" && process.env.FIRESTORE_MODE !== "mock") {
+  if (!firestore.projectId) {
+    throw new Error("FIREBASE_PROJECT_ID environment variable is required");
+  }
 
-  for (const [name, value] of Object.entries(required)) {
-    if (!value) {
-      throw new Error(`${name} environment variable is required`);
-    }
+  // AUTH_SERVICE_ACCOUNT_EMAIL is required in production, optional in mock mode
+  if (!authServiceAccount) {
+    throw new Error("AUTH_SERVICE_ACCOUNT_EMAIL environment variable is required");
   }
 }
 

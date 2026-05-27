@@ -3,6 +3,7 @@ import type { IdentityRecord } from "../src/models/IdentitySchemas";
 
 /**
  * Creates a mock Firestore instance backed by an in-memory Map.
+ * Uses vitest mocks (vi.fn()) for test assertions.
  * Mock fails loudly on unexpected method calls (never silent defaults).
  */
 export function createMockFirestore() {

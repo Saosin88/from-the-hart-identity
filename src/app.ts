@@ -26,17 +26,7 @@ export function buildApp(firestore?: Firestore): FastifyInstance {
     registerIdentityRoutes(app, db);
   }
 
-  // Health endpoint — no auth required, always available
-  // Root-level: infrastructure probe (doesn't depend on Firestore)
-  app.get("/health", async (_request, reply) => {
-    return reply.code(200).send({
-      data: {
-        status: "ok",
-        uptime: process.uptime(),
-        timestamp: Date.now(),
-      },
-    });
-  });
+  // Health endpoint is registered in identity.ts under /identity/health — same pattern as Auth (/auth/health)
 
   app.setErrorHandler<FastifyError>((error, request, reply) => {
     if (error.validation) {

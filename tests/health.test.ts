@@ -1,19 +1,20 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { buildApp } from "../src/app";
+import { createMockFirestore } from "./mockFirestore";
 
-describe("GET /health", () => {
+describe("GET /identity/health", () => {
   let app: ReturnType<typeof buildApp>;
 
   beforeAll(async () => {
-    // No Firestore needed — health is always registered
-    app = buildApp();
+    const { firestore: mockDb } = createMockFirestore();
+    app = buildApp(mockDb as any);
     await app.ready();
   });
 
   it("should return 200 with health data (Test 1)", async () => {
     const res = await app.inject({
       method: "GET",
-      url: "/health",
+      url: "/identity/health",
     });
 
     expect(res.statusCode).toBe(200);

@@ -45,22 +45,35 @@ npm install
 
 ### Local Development
 
-Before starting the application locally, set up Application Default Credentials for Firestore access:
+Two modes for local dev:
+
+**Mock mode (recommended — no GCP credentials needed):**
 
 ```bash
-# Impersonate the identity service account to use ADC locally
-gcloud auth application-default login --impersonate-service-account identity-sa@from-the-hart-tech-dev.iam.gserviceaccount.com
+npm run dev:mock
 ```
 
-This is the same pattern used by the Auth service. On Cloud Run, the service account is attached to the instance and ADC is detected automatically.
+Uses an in-memory Firestore. No `.env` needed, no ADC, no impersonation. All endpoints work — data is lost on restart.
 
-To start the server in development mode:
+**Real mode (requires ADC):**
 
 ```bash
+# Set up Application Default Credentials by impersonating the identity service account
+gcloud auth application-default login --impersonate-service-account identity-sa@from-the-hart-tech-dev.iam.gserviceaccount.com
+
+# Create .env with required vars
+cat > .env << 'EOF'
+FIREBASE_PROJECT_ID=from-the-hart-tech-dev
+AUTH_SERVICE_ACCOUNT_EMAIL=auth-firebase-adminsdk-fbsvc@from-the-hart-tech-dev.iam.gserviceaccount.com
+FIRESTORE_DATABASE_NAME=identity
+NODE_ENV=local
+LOG_LEVEL=debug
+EOF
+
 npm run dev
 ```
 
-This will start the server with hot-reload enabled at http://localhost:8080.
+On Cloud Run, the service account is attached to the instance and ADC is detected automatically — no local setup needed in production.
 
 ### Docker Configuration
 
@@ -122,7 +135,7 @@ http://localhost:8080/identity/documentation
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `FIREBASE_PROJECT_ID` | Yes | GCP project ID |
-| `AUTH_SERVICE_ACCOUNT_EMAIL` | Yes | Auth service's SA email for POST /identity caller verification |
+| `AUTH_SERVICE_ACCOUNT_EMAIL` | No* | Auth service's SA email for POST /identity caller verification. Required in production, optional in mock mode. |
 | `FIRESTORE_DATABASE_NAME` | No | Firestore named database (default: `"identity"`) |
 | `NODE_ENV` | No | Environment (default: `"local"`) |
 | `LOG_LEVEL` | No | Logging level (default: `"info"`) |
@@ -166,7 +179,8 @@ from-the-hart-identity/
 
 ## 📚 Scripts
 
-- `npm run dev` — Start development server
+- `npm run dev` — Start development server with real Firestore (needs ADC + .env)
+- `npm run dev:mock` — Start development server with in-memory mock Firestore (no GCP needed)
 - `npm run build` — Compile TypeScript
 - `npm start` — Start production server
 - `npm test` — Run tests

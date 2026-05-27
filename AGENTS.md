@@ -48,7 +48,8 @@ Two consumers:
 
 ```bash
 npm install              # Install deps
-npm run dev              # Dev server with hot reload (ts-node-dev)
+npm run dev              # Dev server with real Firestore (needs ADC + .env)
+npm run dev:mock         # Dev server with in-memory mock Firestore (zero GCP)
 npm run build            # Compile TypeScript
 npm start                # Run compiled output
 npm test                 # Run all tests

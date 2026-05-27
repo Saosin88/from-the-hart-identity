@@ -15,6 +15,7 @@ export function registerSwagger(app: FastifyInstance): void {
         { url: "http://localhost:8080", description: "Local server" },
       ],
     },
+    routePrefix: "/identity/documentation",
   });
 
   const logoPath = path.join(
