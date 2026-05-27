@@ -16,7 +16,7 @@ export function registerSwagger(app: FastifyInstance): void {
       ],
     },
     routePrefix: "/identity/documentation",
-  });
+  } as any);
 
   const logoPath = path.join(
     __dirname,
