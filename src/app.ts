@@ -4,7 +4,7 @@ import type { Firestore } from "firebase-admin/firestore";
 import { registerSwagger } from "./config/swagger";
 import { fastifyLogger } from "./config/logger";
 import { initializeFirestore } from "./services/firestore";
-import { registerIdentityRoutes } from "./routes/identity";
+import identityRoutes from "./routes/identity";
 
 export function buildApp(firestore?: Firestore): FastifyInstance {
   const app = fastify({
@@ -23,7 +23,7 @@ export function buildApp(firestore?: Firestore): FastifyInstance {
   // Use provided Firestore instance (for tests) or initialize from config
   const db = firestore || (process.env.NODE_ENV !== "test" ? initializeFirestore() : undefined);
   if (db) {
-    registerIdentityRoutes(app, db);
+    app.register(identityRoutes, { firestore: db });
   }
 
   // Health endpoint is registered in identity.ts under /identity/health — same pattern as Auth (/auth/health)

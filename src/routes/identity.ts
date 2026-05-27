@@ -13,10 +13,11 @@ import { verifyAuthServiceCaller } from "../preHandlers/authServiceCaller";
 import { IdentityService } from "../services/identityService";
 import { Firestore } from "firebase-admin/firestore";
 
-export function registerIdentityRoutes(
+export default async function identityRoutes(
   fastify: FastifyInstance,
-  firestore: Firestore
+  opts: { firestore: Firestore }
 ) {
+  const { firestore } = opts;
   const identityService = new IdentityService(firestore);
   const controller = createIdentityController(identityService);
 
