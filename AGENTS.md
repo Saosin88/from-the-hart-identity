@@ -7,7 +7,7 @@
 > Identity domain store — pure profile data with no credentials or authN/authZ concerns.
 > Architecture: [Identity & Access Architecture](../docs/architecture/identity-and-access.md)
 > Domain glossary: [CONTEXT.md](./CONTEXT.md)
-> Active spec: [specs/identity-service-phase-1/](specs/identity-service-phase-1/)
+> Active spec: [specs/identity-service-phase-1/](specs/identity-service-phase-1/) — **Phase 1 complete. All tasks done, 44/44 tests pass.**
 
 ---
 
@@ -49,10 +49,11 @@ Two consumers:
 ```bash
 npm install              # Install deps
 npm run dev              # Dev server with real Firestore (needs ADC + .env)
-npm run dev:mock         # Dev server with in-memory mock Firestore (zero GCP)
+npm run dev:mock         # Dev server with in-memory mock Firestore (zero GCP, sets FIRESTORE_MODE=mock)
 npm run build            # Compile TypeScript
 npm start                # Run compiled output
-npm test                 # Run all tests
+npm test                 # Run all tests (44 tests)
+npm run test:watch       # Watch mode
 npm run test:coverage    # Test with coverage
 ```
 
@@ -74,7 +75,11 @@ src/
 │   └── identity.ts            # Route definitions with full inline OpenAPI schemas
 ├── services/
 │   ├── identityService.ts     # Business logic — CRUD with Firestore transactions
-│   └── firestore.ts           # Firebase Admin init (Firestore only, named DB "identity")
+│   ├── firestore.ts           # Firebase Admin init (Firestore only, ADC-based, named DB "identity")
+│   └── mockFirestore.ts       # In-memory mock for local dev (FIRESTORE_MODE=mock)
+├── public/
+│   └── images/
+│       └── from-the-hart.svg  # Logo for Swagger UI
 ├── preHandlers/
 │   ├── domainAuth.ts          # jwt.decode() to extract identities claim from JWT payload
 │   └── authServiceCaller.ts   # Verify POST /identity caller is Auth service
@@ -112,6 +117,9 @@ Only the Auth service may create Identities. Verify via Cloud Run IAM header:
 - Compare against `config.authServiceAccount`
 - Fallback: decode `X-Serverless-Authorization` JWT for email claim
 - Mismatch or missing → 403 `{ error: { message: "Forbidden" } }`
+
+### Firestore auth (ADC)
+No static service account keys. Firestore uses Application Default Credentials — on Cloud Run the `identity-sa` attached to the service provides credentials via the metadata server. For local dev, use `gcloud auth application-default login` with service account impersonation, or run `npm run dev:mock` to skip GCP entirely.
 
 ### Firestore transactions
 `updateIdentity()` uses a Firestore transaction for atomic read-write. Prevents lost updates on concurrent PATCHes. Firestore SDK handles automatic retry on contention — no custom retry logic needed in Phase 1.

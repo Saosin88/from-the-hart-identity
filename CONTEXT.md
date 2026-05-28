@@ -37,7 +37,7 @@ A Firestore document in the `identities` collection. Contains:
 
 ### Domain Authorization Check
 
-The single authorization invariant in this service: a caller can only read or modify an **Identity** they have a role on. Enforced by base64-decoding the end-user's JWT (from the `Authorization: Bearer` header, forwarded by the **API Gateway**) and reading the `identities` claim.
+The single authorization invariant in this service: a caller can only read or modify an **Identity** they have a role on. Enforced by parsing the end-user's JWT payload via `jwt.decode()` (from the `Authorization: Bearer` header, forwarded by the **API Gateway**) and reading the `identities` claim.
 
 - For `GET /identity/{id}`: the requested `identity_id` must be in the caller's `identities` map.
 - For `PATCH /identity/{id}`: the caller must have the `"owner"` role on the requested identity.
@@ -46,6 +46,19 @@ No cryptographic verification — the **API Gateway** already validated the JWT,
 
 - _Avoid:_ "auth middleware" (this is a domain check, not general middleware)
 - _Relationships:_ Applied as a Fastify `preHandler` hook on protected routes.
+
+---
+
+## Persistence
+
+## Endpoints
+
+### `/identity/health`
+
+Health check endpoint. Returns service status, uptime in seconds (`process.uptime()`), and current timestamp in ms (`Date.now()`). No authentication required. Pattern matches Auth service's `/auth/health`.
+
+- _Avoid:_ N/A (no ambiguous terms)
+- _Relationships:_ Called by Cloud Run startup probe and load balancer health checks.
 
 ---
 

@@ -2,7 +2,7 @@
 
 A Fastify-based identity domain store for From The Hart services. This API provides Identity profile management — a pure domain store with no authentication or authorization logic, backed by Firestore and deployed as a containerized service on Google Cloud Run.
 
-![Status](https://img.shields.io/badge/Status-Live-success)
+![Status](https://img.shields.io/badge/Phase_1-Complete-success)
 ![Platform](https://img.shields.io/badge/Platform-Google_Cloud_Run-blue)
 ![Framework](https://img.shields.io/badge/Framework-Fastify-green)
 
@@ -29,16 +29,16 @@ This service does NOT handle authentication, authorization, or token issuance �
 
 - Node.js (v22 or higher)
 - npm
-- Docker (for containerized deployment)
-- Google Cloud SDK (for Cloud Run deployment)
-- GCP project with Firestore enabled
+
+**For local dev (mock mode):** just the above. Run `npm run dev:mock` — zero GCP credentials needed.
+**For local dev (real Firestore):** Google Cloud SDK with ADC (`gcloud auth application-default login --impersonate-service-account identity-sa@...`).
+**For deployment:** Docker + GCP project with Firestore enabled.
 
 ## 🚀 Getting Started
 
 ### Installation
 
 ```bash
-git clone https://github.com/Saosin88/from-the-hart-identity.git
 cd from-the-hart-identity
 npm install
 ```
@@ -84,7 +84,6 @@ docker build \
   --build-arg NODE_ENV=local \
   --build-arg LOG_LEVEL=debug \
   --build-arg FIREBASE_PROJECT_ID=your-project-id \
-  --build-arg FIREBASE_CLIENT_EMAIL=your-sa-email \
   -t from-the-hart-identity .
 ```
 
@@ -137,6 +136,7 @@ http://localhost:8080/identity/documentation
 | `FIREBASE_PROJECT_ID` | Yes | GCP project ID |
 | `AUTH_SERVICE_ACCOUNT_EMAIL` | No* | Auth service's SA email for POST /identity caller verification. Required in production, optional in mock mode. |
 | `FIRESTORE_DATABASE_NAME` | No | Firestore named database (default: `"identity"`) |
+| `FIRESTORE_MODE` | No | Set to `"mock"` for in-memory Firestore (no GCP needed). Used by `npm run dev:mock`. |
 | `NODE_ENV` | No | Environment (default: `"local"`) |
 | `LOG_LEVEL` | No | Logging level (default: `"info"`) |
 | `PORT` | No | Server port (default: `8080`) |
@@ -163,7 +163,11 @@ from-the-hart-identity/
 │   │   └── identity.ts
 │   ├── services/                  # Business logic
 │   │   ├── identityService.ts     # CRUD with Firestore transactions
-│   │   └── firestore.ts           # Firebase Admin init (Firestore only)
+│   │   ├── firestore.ts           # Firebase Admin init (Firestore only, ADC-based)
+│   │   └── mockFirestore.ts       # In-memory mock for FIRESTORE_MODE=mock
+│   ├── public/
+│   │   └── images/
+│   │       └── from-the-hart.svg  # Logo for Swagger UI
 │   └── preHandlers/               # Auth/authorization hooks
 │       ├── domainAuth.ts          # JWT identities claim check
 │       └── authServiceCaller.ts   # POST /identity caller verification
@@ -179,10 +183,10 @@ from-the-hart-identity/
 
 ## 📚 Scripts
 
-- `npm run dev` — Start development server with real Firestore (needs ADC + .env)
-- `npm run dev:mock` — Start development server with in-memory mock Firestore (no GCP needed)
+- `npm run dev` — Dev server with real Firestore (needs ADC + .env)
+- `npm run dev:mock` — Dev server with in-memory mock Firestore (sets FIRESTORE_MODE=mock, zero GCP)
 - `npm run build` — Compile TypeScript
-- `npm start` — Start production server
-- `npm test` — Run tests
+- `npm start` — Start compiled production server
+- `npm test` — Run all tests (44 tests, Vitest + supertest)
 - `npm run test:watch` — Watch mode
 - `npm run test:coverage` — Test with coverage

@@ -1,12 +1,23 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import jwt from "jsonwebtoken";
 import { config } from "../config";
+import { logger } from "../config/logger";
 
 export async function verifyAuthServiceCaller(
   request: FastifyRequest,
   reply: FastifyReply
 ): Promise<void> {
   const callerEmail = extractCallerEmail(request);
+
+  logger.info(
+    {
+      callerEmail,
+      expectedEmail: config.authServiceAccount,
+      hasGoogleHeader: !!request.headers["x-goog-authenticated-user-email"],
+      hasServerlessHeader: !!request.headers["x-serverless-authorization"],
+    },
+    "verifyAuthServiceCaller: caller identity check",
+  );
 
   if (!callerEmail || callerEmail !== config.authServiceAccount) {
     reply.code(403).send({ error: { message: "Forbidden" } });
