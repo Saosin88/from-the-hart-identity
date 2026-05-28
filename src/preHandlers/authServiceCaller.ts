@@ -15,6 +15,7 @@ export async function verifyAuthServiceCaller(
       expectedEmail: config.authServiceAccount,
       hasGoogleHeader: !!request.headers["x-goog-authenticated-user-email"],
       hasServerlessHeader: !!request.headers["x-serverless-authorization"],
+      hasAuthHeader: !!request.headers.authorization,
     },
     "verifyAuthServiceCaller: caller identity check",
   );
