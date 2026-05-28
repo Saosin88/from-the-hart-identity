@@ -1,6 +1,13 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { buildApp } from "../src/app";
 import { createMockFirestore } from "./mockFirestore";
+import jwt from "jsonwebtoken";
+
+const MOCK_AUTH_EMAIL = "auth-sa@test-project.iam.gserviceaccount.com";
+const authToken = () =>
+  `Bearer ${jwt.sign({ email: MOCK_AUTH_EMAIL }, "test-secret")}`;
+const wrongToken = () =>
+  `Bearer ${jwt.sign({ email: "wrong-sa@project.iam.gserviceaccount.com" }, "test-secret")}`;
 
 describe("Auth Service Caller Verification", () => {
   let app: ReturnType<typeof buildApp>;
@@ -11,7 +18,7 @@ describe("Auth Service Caller Verification", () => {
     app = buildApp(mock.firestore as any);
   });
 
-  it("should return 403 when no auth headers are present on POST /identity", async () => {
+  it("should return 403 when no auth header is present on POST /identity", async () => {
     const res = await app.inject({
       method: "POST",
       url: "/identity",
@@ -31,8 +38,7 @@ describe("Auth Service Caller Verification", () => {
       method: "POST",
       url: "/identity",
       headers: {
-        "x-goog-authenticated-user-email":
-          "accounts.google.com:wrong-sa@project.iam.gserviceaccount.com",
+        authorization: wrongToken(),
       },
       body: {
         email: "test@example.com",
@@ -50,8 +56,7 @@ describe("Auth Service Caller Verification", () => {
       method: "POST",
       url: "/identity",
       headers: {
-        "x-goog-authenticated-user-email":
-          "accounts.google.com:auth-sa@test-project.iam.gserviceaccount.com",
+        authorization: authToken(),
       },
       body: {
         email: "sheldon@example.com",

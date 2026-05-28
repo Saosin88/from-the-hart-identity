@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import { buildApp } from "../src/app";
 import { createMockFirestore } from "./mockFirestore";
+import jwt from "jsonwebtoken";
+
+const MOCK_AUTH_EMAIL = "auth-sa@test-project.iam.gserviceaccount.com";
+const authToken = () =>
+  `Bearer ${jwt.sign({ email: MOCK_AUTH_EMAIL }, "test-secret")}`;
 
 describe("POST /identity", () => {
   let app: ReturnType<typeof buildApp>;
@@ -20,8 +25,7 @@ describe("POST /identity", () => {
       method: "POST",
       url: "/identity",
       headers: {
-        "x-goog-authenticated-user-email":
-          "accounts.google.com:auth-sa@test-project.iam.gserviceaccount.com",
+        authorization: authToken(),
       },
       body: {
         email: "sheldon@example.com",
@@ -62,8 +66,7 @@ describe("POST /identity", () => {
       method: "POST",
       url: "/identity",
       headers: {
-        "x-goog-authenticated-user-email":
-          "accounts.google.com:wrong-sa@project.iam.gserviceaccount.com",
+        authorization: `Bearer ${jwt.sign({ email: "wrong-sa@project.iam.gserviceaccount.com" }, "test-secret")}`,
       },
       body: {
         email: "test@example.com",
@@ -83,8 +86,7 @@ describe("POST /identity", () => {
       method: "POST",
       url: "/identity",
       headers: {
-        "x-goog-authenticated-user-email":
-          "accounts.google.com:auth-sa@test-project.iam.gserviceaccount.com",
+        authorization: authToken(),
       },
       body: {
         first_name: "",
@@ -103,8 +105,7 @@ describe("POST /identity", () => {
       method: "POST",
       url: "/identity",
       headers: {
-        "x-goog-authenticated-user-email":
-          "accounts.google.com:auth-sa@test-project.iam.gserviceaccount.com",
+        authorization: authToken(),
       },
       body: {
         email: "test@example.com",
